@@ -21,9 +21,9 @@ async function resolveRole(user: User): Promise<Role> {
   try {
     const existing = await fetchRole(user.uid);
     if (existing) return existing;
-    // First signup in the system becomes admin; everyone else is a regular user.
-    // The decision + insert happen atomically inside a Postgres SECURITY DEFINER
-    // function to avoid a TOCTOU race between concurrent signups.
+    // New sign-ups are always minted as `user`. Admin / vendor / staff must be
+    // granted out-of-band (Phase 1: SQL editor; Phase 2: server endpoint that
+    // verifies a Firebase ID token via the Admin SDK). See supabase/schema.sql.
     return await assignRoleOnSignup(user.uid, user.email);
   } catch {
     return "user";

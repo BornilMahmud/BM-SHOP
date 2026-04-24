@@ -10,9 +10,9 @@ create table if not exists public.user_roles (
 
 alter table public.user_roles enable row level security;
 
--- The table is readable by any authenticated / anon client, but direct writes
--- are forbidden. All inserts/updates must go through the SECURITY DEFINER
--- functions below so role-assignment is atomic and tamper-resistant.
+-- Anyone can read roles (the frontend needs this to render the correct panel).
+-- Writes are forbidden from the client; all mutations flow through the
+-- SECURITY DEFINER function below.
 drop policy if exists "bm_shop_read_roles" on public.user_roles;
 create policy "bm_shop_read_roles"
   on public.user_roles for select
@@ -22,20 +22,25 @@ drop policy if exists "bm_shop_insert_roles" on public.user_roles;
 drop policy if exists "bm_shop_update_own_role" on public.user_roles;
 
 -- ---------------------------------------------------------------------------
--- Atomic role assignment
+-- Role assignment on sign-up
 --
--- `assign_role_on_signup` decides and inserts a role for a newly-signed-up
--- Firebase UID in a single SECURITY DEFINER transaction.
+-- Identity provider is Firebase — Supabase receives requests as the `anon`
+-- role (the anon key is intentionally public). Because the anon key is known
+-- to anyone with the frontend bundle, this function MUST NOT be able to mint
+-- elevated roles. It therefore only ever assigns `user`, and is idempotent
+-- for returning UIDs so it can safely run on every sign-in.
 --
--- Concurrency:
---   * A transaction-scoped advisory lock serialises concurrent callers so
---     the "is the table empty?" check and the subsequent insert happen
---     without a TOCTOU window. Any number of users can sign up concurrently,
---     but at most one will observe `count = 0` and be minted as admin.
---   * The insert uses `on conflict (uid) do nothing` so a retried call for
---     the same UID is idempotent.
---   * Subsequent admin promotions (e.g. an existing admin updating another
---     user's row) are unaffected because the lock only guards this function.
+-- To promote a user to admin / vendor / staff, run the SQL below in the
+-- Supabase SQL editor after they have signed up once (the editor uses the
+-- service role, which bypasses these restrictions):
+--
+--   update public.user_roles
+--   set role = 'admin'
+--   where email = 'owner@example.com';
+--
+-- Phase 2 will move this logic behind a Node + Express endpoint that verifies
+-- a Firebase ID token using the Admin SDK before touching the table with the
+-- service role key. See server/README.md.
 -- ---------------------------------------------------------------------------
 create or replace function public.assign_role_on_signup(
   p_uid text,
@@ -48,7 +53,6 @@ set search_path = public
 as $$
 declare
   existing text;
-  desired text;
 begin
   -- Idempotent fast-path for returning users.
   select role into existing from public.user_roles where uid = p_uid;
@@ -56,23 +60,10 @@ begin
     return existing;
   end if;
 
-  -- Serialise the "first user becomes admin" window.
-  perform pg_advisory_xact_lock(hashtext('bm_shop.assign_role_on_signup'));
-
-  -- Re-check inside the lock in case another caller just inserted.
-  select role into existing from public.user_roles where uid = p_uid;
-  if existing is not null then
-    return existing;
-  end if;
-
-  if (select count(*) from public.user_roles) = 0 then
-    desired := 'admin';
-  else
-    desired := 'user';
-  end if;
-
+  -- New sign-ups always start as `user`. Elevation is done out-of-band by
+  -- someone with the Supabase service role (see header comment).
   insert into public.user_roles (uid, email, role)
-  values (p_uid, p_email, desired)
+  values (p_uid, p_email, 'user')
   on conflict (uid) do nothing;
 
   select role into existing from public.user_roles where uid = p_uid;

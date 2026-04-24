@@ -20,8 +20,10 @@ will be implemented alongside the payment flow.
 
 ### Supabase helpers
 - `POST /api/auth/role` — server-validated role assignment using the Supabase
-  `service_role` key, keyed off a verified Firebase ID token. This removes the
-  need for permissive RLS policies on `user_roles`.
+  `service_role` key, keyed off a Firebase ID token verified with the Firebase
+  Admin SDK. This is what unlocks server-side admin provisioning: today the
+  Phase 1 `assign_role_on_signup` RPC only ever mints `user`, and promotions
+  to admin/vendor/staff must be done by hand in the Supabase SQL editor.
 
 ## Environment
 
