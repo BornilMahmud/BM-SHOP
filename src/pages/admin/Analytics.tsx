@@ -22,10 +22,9 @@ function fmt(n: number) {
 const COLORS = ["#7161FF", "#E96BD8", "#5BA8FF", "#49E0A6", "#FF9A5A"];
 
 export default function AdminAnalytics() {
-  const revenue = orders
-    .filter((o) => o.status !== "cancelled")
-    .reduce((s, o) => s + o.total, 0);
-  const avgOrder = Math.round(revenue / orders.length);
+  const nonCancelled = orders.filter((o) => o.status !== "cancelled");
+  const revenue = nonCancelled.reduce((s, o) => s + o.total, 0);
+  const avgOrder = nonCancelled.length > 0 ? Math.round(revenue / nonCancelled.length) : 0;
 
   const byCategory = Object.entries(
     products.reduce<Record<string, number>>((acc, p) => {

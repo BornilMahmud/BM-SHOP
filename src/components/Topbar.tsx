@@ -1,10 +1,14 @@
-import { Bell, Search, Sparkles } from "lucide-react";
+import { Bell, LogOut, Search, Sparkles } from "lucide-react";
+import { useAuth } from "../auth/use-auth";
 
 interface Props {
   onOpenAI: () => void;
 }
 
 export default function Topbar({ onOpenAI }: Props) {
+  const { user, signOutUser } = useAuth();
+  const initial = (user?.displayName || user?.email || "A").charAt(0).toUpperCase();
+
   return (
     <header className="sticky top-0 z-20 backdrop-blur-xl bg-bg-900/60 border-b border-bg-border">
       <div className="flex items-center gap-3 px-4 lg:px-8 h-16">
@@ -31,8 +35,21 @@ export default function Topbar({ onOpenAI }: Props) {
         <button className="btn-ghost" aria-label="Notifications">
           <Bell size={16} />
         </button>
-        <div className="w-9 h-9 rounded-full bg-brand-gradient flex items-center justify-center text-white font-semibold">
-          A
+        {user && (
+          <button
+            onClick={() => signOutUser()}
+            className="btn-ghost"
+            aria-label="Sign out"
+            title="Sign out"
+          >
+            <LogOut size={16} />
+          </button>
+        )}
+        <div
+          className="w-9 h-9 rounded-full bg-brand-gradient flex items-center justify-center text-white font-semibold"
+          title={user?.email ?? "Admin"}
+        >
+          {initial}
         </div>
       </div>
     </header>
