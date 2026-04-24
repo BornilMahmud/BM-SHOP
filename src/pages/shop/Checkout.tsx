@@ -6,16 +6,24 @@ function fmt(n: number) {
   return `৳${n.toLocaleString("en-BD")}`;
 }
 
+type PaymentMethod = "cod" | "bkash" | "nagad" | "card";
+
 export default function Checkout() {
   const { cart, products, cartSubtotal, clearCart } = useStore();
   const navigate = useNavigate();
-  const [payment, setPayment] = useState<"cod" | "bkash" | "card">("cod");
+  const [payment, setPayment] = useState<PaymentMethod>("cod");
+  const [bkashTxId, setBkashTxId] = useState("");
   const SHIPPING = 130;
   const COD_FEE = payment === "cod" ? 20 : 0;
   const total = cartSubtotal + SHIPPING + COD_FEE;
 
   function place(e: React.FormEvent) {
     e.preventDefault();
+    if (payment === "bkash" && bkashTxId.trim().length < 6) {
+      alert("Please enter a valid bKash transaction ID");
+      return;
+    }
+    // TODO(phase2): for payment === "nagad", call backend to initiate Nagad and redirect.
     const id = `ORD-${Math.floor(10000 + Math.random() * 90000)}`;
     clearCart();
     navigate(`/order/${id}`);
@@ -54,17 +62,18 @@ export default function Checkout() {
           <div className="section-title mb-2">Payment method</div>
           {(
             [
-              { k: "cod", label: "Cash on Delivery (+৳20)" },
-              { k: "bkash", label: "bKash" },
-              { k: "card", label: "Card" },
+              { k: "cod", label: "Cash on Delivery (+৳20)", hint: "Pay in cash when the order arrives." },
+              { k: "bkash", label: "bKash (manual)", hint: "Send to 017XXXXXXXX and submit the transaction ID below." },
+              { k: "nagad", label: "Nagad", hint: "Redirect to Nagad to complete payment (server integration)." },
+              { k: "card", label: "Card", hint: "Pay via card gateway." },
             ] as const
           ).map((opt) => (
             <label
               key={opt.k}
               className={
                 payment === opt.k
-                  ? "flex items-center gap-3 p-3 rounded-xl border border-brand-400/60 bg-brand-gradient/10 cursor-pointer"
-                  : "flex items-center gap-3 p-3 rounded-xl border border-bg-border cursor-pointer"
+                  ? "flex items-start gap-3 p-3 rounded-xl border border-brand-400/60 bg-brand-gradient/10 cursor-pointer"
+                  : "flex items-start gap-3 p-3 rounded-xl border border-bg-border cursor-pointer"
               }
             >
               <input
@@ -72,11 +81,38 @@ export default function Checkout() {
                 name="pay"
                 checked={payment === opt.k}
                 onChange={() => setPayment(opt.k)}
-                className="accent-brand-400"
+                className="accent-brand-400 mt-1"
               />
-              <span className="text-white">{opt.label}</span>
+              <span className="flex-1">
+                <span className="block text-white">{opt.label}</span>
+                <span className="block text-xs text-ink-300 mt-0.5">{opt.hint}</span>
+              </span>
             </label>
           ))}
+
+          {payment === "bkash" && (
+            <div className="mt-3 p-3 rounded-xl border border-bg-border bg-bg-800/40">
+              <div className="text-xs text-ink-300 mb-2">
+                Send <span className="text-white font-semibold">{fmt(total)}</span> via bKash Send Money
+                to merchant number <span className="text-white font-semibold">017XXXXXXXX</span>, then
+                paste the transaction ID here. An admin will verify and confirm the order.
+              </div>
+              <input
+                className="input"
+                placeholder="bKash Transaction ID (e.g. 9A2XB4C5D6)"
+                value={bkashTxId}
+                onChange={(e) => setBkashTxId(e.target.value)}
+                required
+              />
+            </div>
+          )}
+
+          {payment === "nagad" && (
+            <div className="mt-3 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs text-amber-200">
+              Nagad will redirect you to the gateway once the backend is live (Phase 2).
+              For now this demo places a pending order.
+            </div>
+          )}
         </div>
 
         <button type="submit" className="btn-primary w-full">

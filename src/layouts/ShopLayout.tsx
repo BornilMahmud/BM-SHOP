@@ -2,9 +2,18 @@ import { Link, NavLink, Outlet } from "react-router-dom";
 import { ShoppingCart, User } from "lucide-react";
 import Logo from "../components/Logo";
 import { useStore } from "../use-store";
+import { useAuth } from "../auth/use-auth";
+import { HOME_BY_ROLE } from "../auth/auth-ctx";
 
 export default function ShopLayout() {
   const { cartCount } = useStore();
+  const { user, role } = useAuth();
+
+  const accountTarget = user && role ? HOME_BY_ROLE[role] : "/login";
+  const accountLabel = user
+    ? user.displayName || user.email?.split("@")[0] || "Account"
+    : "Sign in";
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-20 backdrop-blur-xl bg-bg-900/70 border-b border-bg-border">
@@ -27,12 +36,26 @@ export default function ShopLayout() {
             <a className="hover:text-white cursor-pointer">About</a>
           </nav>
           <div className="flex-1" />
-          <Link to="/admin" className="btn-ghost hidden md:inline-flex">
-            Admin
-          </Link>
-          <button className="btn-ghost !px-2.5" aria-label="Account">
+          {role === "admin" && (
+            <Link to="/admin/dashboard" className="btn-ghost hidden md:inline-flex">
+              Admin
+            </Link>
+          )}
+          <Link
+            to={accountTarget}
+            className="btn-ghost hidden md:inline-flex"
+            aria-label="Account"
+          >
             <User size={16} />
-          </button>
+            <span className="ml-1 max-w-[120px] truncate">{accountLabel}</span>
+          </Link>
+          <Link
+            to={accountTarget}
+            className="btn-ghost md:hidden !px-2.5"
+            aria-label="Account"
+          >
+            <User size={16} />
+          </Link>
           <Link
             to="/cart"
             className="relative btn-ghost !px-2.5"
