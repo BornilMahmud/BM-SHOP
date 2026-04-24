@@ -220,10 +220,26 @@ export const INTENTS: AIIntent[] = [
   {
     id: "nav_products",
     label: "Go to products",
-    keywords: ["open products", "show products", "products page", "inventory"],
+    keywords: ["open products", "show products", "products page"],
     run: () => ({
       text: "Opening products…",
       navigate: "/admin/products",
+    }),
+  },
+  {
+    id: "nav_inventory",
+    label: "Go to inventory / ERP",
+    keywords: [
+      "open inventory",
+      "show inventory",
+      "inventory page",
+      "inventory",
+      "erp",
+      "open erp",
+    ],
+    run: () => ({
+      text: "Opening inventory…",
+      navigate: "/admin/inventory",
     }),
   },
   {

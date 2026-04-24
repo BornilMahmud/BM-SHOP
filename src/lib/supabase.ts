@@ -28,11 +28,12 @@ export async function fetchRole(uid: string): Promise<Role | null> {
 }
 
 /**
- * Atomically assigns (or returns the existing) role for a Firebase UID.
+ * Assigns (or returns the existing) role for a Firebase UID.
  *
  * Calls the SECURITY DEFINER Postgres function defined in
- * `supabase/schema.sql`, which handles the "first user becomes admin"
- * logic under an advisory lock so concurrent signups cannot both win.
+ * `supabase/schema.sql`. New users always receive the `user` role;
+ * admin / vendor / staff must be promoted out-of-band (see schema
+ * comments). The call is idempotent for UIDs that already have a row.
  */
 export async function assignRoleOnSignup(
   uid: string,
