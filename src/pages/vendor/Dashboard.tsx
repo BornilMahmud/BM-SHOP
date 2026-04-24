@@ -10,8 +10,10 @@ export default function VendorDashboard() {
   const mine = products.slice(0, 12);
   const myIds = new Set(mine.map((p) => p.id));
 
-  const myOrders = orders.filter((o) =>
-    o.items.some((it) => myIds.has(it.productId))
+  const myOrders = orders.filter(
+    (o) =>
+      o.status !== "cancelled" &&
+      o.items.some((it) => myIds.has(it.productId))
   );
   const revenue = myOrders.reduce(
     (s, o) =>

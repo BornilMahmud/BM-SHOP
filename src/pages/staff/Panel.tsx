@@ -8,15 +8,18 @@ function fmt(n: number) {
 }
 
 export default function StaffPanel() {
-  const queue = orders.filter((o) => o.status === "pending" || o.status === "processing").slice(0, 8);
-  const totalQueue = queue.reduce((s, o) => s + o.total, 0);
+  const allQueue = orders.filter(
+    (o) => o.status === "pending" || o.status === "processing"
+  );
+  const queue = allQueue.slice(0, 8);
+  const totalQueue = allQueue.reduce((s, o) => s + o.total, 0);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Staff panel</h1>
         <p className="text-sm text-ink-300">
-          {queue.length} orders awaiting action · {fmt(totalQueue)} pipeline value
+          {allQueue.length} orders awaiting action · {fmt(totalQueue)} pipeline value
         </p>
       </div>
 

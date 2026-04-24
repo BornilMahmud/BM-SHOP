@@ -10,6 +10,7 @@ export default function VendorSales() {
   mine.forEach((p) => byProduct.set(p.id, { units: 0, revenue: 0 }));
 
   for (const o of orders) {
+    if (o.status === "cancelled") continue;
     for (const it of o.items) {
       const row = byProduct.get(it.productId);
       if (!row) continue;
