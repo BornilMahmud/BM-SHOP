@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-bg-900 text-ink-100 font-sans antialiased;
+    background-image: radial-gradient(
+        1200px 600px at -10% -20%,
+        rgba(113, 97, 255, 0.18),
+        transparent 60%
+      ),
+      radial-gradient(
+        900px 500px at 110% 10%,
+        rgba(233, 107, 216, 0.12),
+        transparent 60%
+      ),
+      linear-gradient(180deg, #0b0b12 0%, #0a0a14 100%);
+    background-attachment: fixed;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    @apply bg-bg-border rounded-full;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-bg-card/70 backdrop-blur-xl border border-bg-border rounded-2xl shadow-card;
+  }
+  .glass-hover {
+    @apply transition-all duration-200 hover:border-brand-400/60 hover:shadow-glow;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl
+           font-medium text-sm transition-all duration-150;
+  }
+  .btn-primary {
+    @apply btn bg-brand-gradient text-white shadow-glow
+           hover:brightness-110 active:brightness-95;
+  }
+  .btn-ghost {
+    @apply btn bg-bg-card text-ink-100 border border-bg-border
+           hover:border-brand-400/60 hover:text-white;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs
+           bg-bg-card border border-bg-border text-ink-200;
+  }
+  .chip-success {
+    @apply chip bg-accent-green/10 border-accent-green/30 text-accent-green;
+  }
+  .chip-warning {
+    @apply chip bg-accent-orange/10 border-accent-orange/30 text-accent-orange;
+  }
+  .chip-danger {
+    @apply chip bg-accent-red/10 border-accent-red/30 text-accent-red;
+  }
+  .chip-info {
+    @apply chip bg-accent-blue/10 border-accent-blue/30 text-accent-blue;
+  }
+  .input {
+    @apply w-full bg-bg-800/80 border border-bg-border rounded-xl
+           px-3 py-2 text-sm text-ink-100 placeholder:text-ink-400
+           focus:outline-none focus:border-brand-400/60
+           focus:ring-2 focus:ring-brand-400/20;
+  }
+  .stat-card {
+    @apply glass p-5 flex flex-col gap-3 glass-hover;
+  }
+  .section-title {
+    @apply text-lg font-semibold text-white;
+  }
+}
