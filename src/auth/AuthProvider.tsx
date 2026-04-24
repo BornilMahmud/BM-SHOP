@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -49,16 +49,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState<boolean>(firebaseConfigured);
   const [error, setError] = useState<string | null>(null);
 
+  // Track the most recent UID observed by onAuthStateChanged so that a stale
+  // resolveRole() promise can't overwrite state produced by a newer auth event
+  // (e.g. sign-out firing while a previous sign-in is still awaiting Supabase).
+  const currentUidRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!auth) return;
     const unsub = onAuthStateChanged(auth, async (u) => {
+      const uid = u?.uid ?? null;
+      currentUidRef.current = uid;
       setUser(u);
       if (u) {
         const r = await resolveRole(u);
+        if (currentUidRef.current !== uid) return;
         setRole(r);
       } else {
         setRole(null);
       }
+      if (currentUidRef.current !== uid) return;
       setLoading(false);
     });
     return () => unsub();

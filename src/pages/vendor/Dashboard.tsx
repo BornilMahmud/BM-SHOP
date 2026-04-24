@@ -13,7 +13,14 @@ export default function VendorDashboard() {
   const myOrders = orders.filter((o) =>
     o.items.some((it) => myIds.has(it.productId))
   );
-  const revenue = myOrders.reduce((s, o) => s + o.total, 0);
+  const revenue = myOrders.reduce(
+    (s, o) =>
+      s +
+      o.items
+        .filter((it) => myIds.has(it.productId))
+        .reduce((x, it) => x + it.qty * it.price, 0),
+    0
+  );
   const unitsSold = myOrders.reduce(
     (s, o) =>
       s +
