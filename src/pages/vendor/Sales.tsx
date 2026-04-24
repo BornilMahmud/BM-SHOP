@@ -13,9 +13,8 @@ export default function VendorSales() {
     for (const it of o.items) {
       const row = byProduct.get(it.productId);
       if (!row) continue;
-      const p = mine.find((pp) => pp.id === it.productId)!;
       row.units += it.qty;
-      row.revenue += it.qty * p.price;
+      row.revenue += it.qty * it.price;
     }
   }
 

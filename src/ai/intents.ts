@@ -79,6 +79,7 @@ export const INTENTS: AIIntent[] = [
     ],
     run: ({ products }) => {
       const top = [...products].sort((a, b) => b.sales - a.sales).slice(0, 5);
+      if (top.length === 0) return { text: "No products found." };
       return {
         text: `Top seller: ${top[0].name} with ${top[0].sales} units.`,
         table: {
@@ -162,6 +163,7 @@ export const INTENTS: AIIntent[] = [
     ],
     run: ({ customers }) => {
       const top = [...customers].sort((a, b) => b.spent - a.spent).slice(0, 5);
+      if (top.length === 0) return { text: "No customers found." };
       return {
         text: `Top customer: ${top[0].name} (${formatBDT(top[0].spent)}).`,
         table: {
