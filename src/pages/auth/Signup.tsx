@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { Loader2, UserPlus } from "lucide-react";
 import { useAuth } from "../../auth/use-auth";
-import { HOME_BY_ROLE } from "../../auth/auth-ctx";
+import { HOME_BY_ROLE, sanitizeNextPath } from "../../auth/auth-ctx";
 import { firebaseConfigured } from "../../lib/firebase";
 import Logo from "../../components/Logo";
 
@@ -37,8 +37,8 @@ export default function Signup() {
 
   if (user && role && !loading) {
     const params = new URLSearchParams(location.search);
-    const next = params.get("next");
-    return <Navigate to={next || HOME_BY_ROLE[role]} replace />;
+    const safeNext = sanitizeNextPath(params.get("next"));
+    return <Navigate to={safeNext || HOME_BY_ROLE[role]} replace />;
   }
 
   async function onSubmit(e: FormEvent) {
