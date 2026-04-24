@@ -13,14 +13,8 @@ export const supabase: SupabaseClient | null = supabaseConfigured
 
 export type Role = "admin" | "user" | "vendor" | "staff";
 
-export interface UserRoleRow {
-  uid: string;
-  email: string | null;
-  role: Role;
-  created_at?: string;
-}
-
 const TABLE = "user_roles";
+const RPC_ASSIGN_ROLE = "assign_role_on_signup";
 
 export async function fetchRole(uid: string): Promise<Role | null> {
   if (!supabase) return null;
@@ -33,19 +27,22 @@ export async function fetchRole(uid: string): Promise<Role | null> {
   return (data?.role as Role | undefined) ?? null;
 }
 
-export async function upsertRole(row: UserRoleRow): Promise<void> {
+/**
+ * Atomically assigns (or returns the existing) role for a Firebase UID.
+ *
+ * Calls the SECURITY DEFINER Postgres function defined in
+ * `supabase/schema.sql`, which handles the "first user becomes admin"
+ * logic under an advisory lock so concurrent signups cannot both win.
+ */
+export async function assignRoleOnSignup(
+  uid: string,
+  email: string | null
+): Promise<Role> {
   if (!supabase) throw new Error("Supabase not configured");
-  const { error } = await supabase
-    .from(TABLE)
-    .upsert({ uid: row.uid, email: row.email, role: row.role });
+  const { data, error } = await supabase.rpc(RPC_ASSIGN_ROLE, {
+    p_uid: uid,
+    p_email: email,
+  });
   if (error) throw error;
-}
-
-export async function countRoles(): Promise<number> {
-  if (!supabase) return 0;
-  const { count, error } = await supabase
-    .from(TABLE)
-    .select("*", { count: "exact", head: true });
-  if (error) throw error;
-  return count ?? 0;
+  return (data as Role) ?? "user";
 }

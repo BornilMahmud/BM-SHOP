@@ -9,10 +9,9 @@ import {
 } from "firebase/auth";
 import { auth, firebaseConfigured, googleProvider, githubProvider } from "../lib/firebase";
 import {
-  countRoles,
+  assignRoleOnSignup,
   fetchRole,
   supabaseConfigured,
-  upsertRole,
   type Role,
 } from "../lib/supabase";
 import { AuthCtx, type AuthState } from "./auth-ctx";
@@ -22,11 +21,10 @@ async function resolveRole(user: User): Promise<Role> {
   try {
     const existing = await fetchRole(user.uid);
     if (existing) return existing;
-    // First account in the system becomes admin; everyone else defaults to user.
-    const total = await countRoles();
-    const role: Role = total === 0 ? "admin" : "user";
-    await upsertRole({ uid: user.uid, email: user.email, role });
-    return role;
+    // First signup in the system becomes admin; everyone else is a regular user.
+    // The decision + insert happen atomically inside a Postgres SECURITY DEFINER
+    // function to avoid a TOCTOU race between concurrent signups.
+    return await assignRoleOnSignup(user.uid, user.email);
   } catch {
     return "user";
   }
